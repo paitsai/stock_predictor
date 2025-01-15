@@ -50,7 +50,7 @@ if __name__ == "__main__":
         scaled_data = scaler.fit_transform(data)
 
         # Create training and testing datasets
-        train_size = int(len(scaled_data) * 0.8)
+        train_size = int(len(scaled_data) * 0.6)
         train_data = scaled_data[:train_size]
         test_data = scaled_data[train_size:]
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
             return np.array(X), np.array(y)
 
         # Set time step
-        time_step = 32  # Use the past 20 days to predict the next day
+        time_step = 128  # Use the past 20 days to predict the next day
         X_train, y_train = create_dataset(train_data, time_step)
         X_test, y_test = create_dataset(test_data, time_step)
 
