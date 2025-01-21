@@ -6,3 +6,5 @@
 ```shell
 export PYTHONPATH="$PYTHONPATH:$(pwd)"
 ```
+
+尝试部署在WSL上！
