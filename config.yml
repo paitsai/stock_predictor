@@ -1,0 +1,2 @@
+stock_price_data: "/data/stock_logs/"
+mashiro_lstm_model: "/lstm/lstm_stock_mashiro.pt"
