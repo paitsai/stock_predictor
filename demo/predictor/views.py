@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+from django.http import HttpResponse
 # Create your views here.
 
 from rest_framework import viewsets
@@ -17,6 +17,7 @@ class StockViewSet(viewsets.ModelViewSet):
 
 
 class GetStockPriceByCompanyCode(generics.RetrieveAPIView):
+    # 根据Company Code来获取
     queryset = StockPrice.objects.all()
     serializer_class = StockSerializer
     
@@ -30,3 +31,9 @@ class GetStockPriceByCompanyCode(generics.RetrieveAPIView):
                 return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+
+def IndexPage(request):
+    return render(request, 'index.html')

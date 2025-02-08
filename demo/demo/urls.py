@@ -18,8 +18,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from predictor import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("predictor.urls")),
+    path("testpage/", views.IndexPage, name='index'),
 ]
