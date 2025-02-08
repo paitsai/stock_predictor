@@ -2,3 +2,5 @@
 *.pt
 __pcache__/
 imgs/
+appfront/node_modules/
+*.pyc
