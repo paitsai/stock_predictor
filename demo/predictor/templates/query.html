@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司股价查询</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-top: 20px;
+            font-size: 36px;
+        }
+
+        .search-box {
+            text-align: center;
+            margin: 30px auto;
+            max-width: 600px;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .search-input {
+            padding: 12px;
+            width: 300px;
+            border: 2px solid #007bff;
+            border-radius: 25px;
+            font-size: 16px;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(0,123,255,0.3);
+            border-color: #0056b3;
+        }
+
+        .search-button {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-button:hover {
+            background-color: #0056b3;
+        }
+
+        .company-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px;
+        }
+
+        .table-container, .chart-container {
+            width: 48%;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-container th, .table-container td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table-container th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .table-container tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #loading, #errorMsg {
+            text-align: center;
+            font-size: 18px;
+            padding: 20px;
+        }
+
+        #loading {
+            color: #007bff;
+        }
+
+        #errorMsg {
+            color: #dc3545;
+        }
+
+        .chart-container h2 {
+            text-align: center;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>公司股价查询系统</h1>
+    
+    <div class="search-box">
+        <input type="text" 
+               id="companyCode" 
+               class="search-input"
+               placeholder="输入公司代码（如：US1CNFS）">
+        <button id="searchButton" class="search-button">
+            立即查询
+        </button>
+    </div>
+
+    <div id="resultContainer" style="display: none;">
+        <div class="company-container">
+            <div class="table-container">
+                <h2 id="companyTitle"></h2>
+                <table id="priceTable">
+                    <thead>
+                        <tr>
+                            <th>公司名称</th>
+                            <th>公司代码</th>
+                            <th>记录时间</th>
+                            <th>历史股价</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 数据行将通过JS动态插入 -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="chart-container">
+                <h2>股价趋势图</h2>
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">查询中...</div>
+    <div id="errorMsg" class="loading" style="display: none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const API_ENDPOINT = 'http://127.0.0.1:8000/api/get_stocks_prices_by_code/';
+
+        // 页面加载时自动查询US1CNFS的数据
+        window.onload = function() {
+            fetchStockData('US1CNFS');
+        };
+
+        document.getElementById('searchButton').addEventListener('click', function() {
+            const companyCode = document.getElementById('companyCode').value.trim();
+            if (!companyCode) {
+                showError('请输入有效的公司代码');
+                return;
+            }
+            fetchStockData(companyCode);
+        });
+
+        async function fetchStockData(code) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_ENDPOINT}${code}/`);
+                if (!response.ok) throw new Error(`HTTP错误 ${response.status}`);
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                displayStockData(code, data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayStockData(code, data) {
+            document.getElementById('companyTitle').textContent = `${code} 股价数据`;
+            const tbody = document.querySelector('#priceTable tbody');
+            tbody.innerHTML = data.map(item => `
+                <tr>
+                    <td>${item.company_name}</td>
+                    <td>${item.company_code}</td>
+                    <td>${item.date}</td>
+                    <td>${item.stock_price}</td>
+                </tr>
+            `).join('');
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [{
+                        label: '收盘价',
+                        data: data.map(d => d.stock_price),
+                        borderColor: '#007bff',
+                        tension: 0.4
+                    }]
+                }
+            });
+
+            document.getElementById('resultContainer').style.display = 'block';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('errorMsg').textContent = `错误：${message}`;
+            document.getElementById('errorMsg').style.display = 'block';
+            document.getElementById('resultContainer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

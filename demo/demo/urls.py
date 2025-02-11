@@ -24,5 +24,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("predictor.urls")),
     path("mainpage/", views.IndexPage, name='index'),
-    path('show/',views.StocksPage,name='show')
+    path('show/',views.StocksPage,name='show'),
+    path('query/',views.StockQuery,name='query'),
 ]

@@ -37,7 +37,6 @@ class GetStockPriceByCompanyCode(generics.RetrieveAPIView):
 class FetchSomeStockInfo(generics.RetrieveAPIView):
     queryset = StockPrice.objects.all()
     serializer_class = StockSerializer
-
     def get(self, request, company_num, stock_num):
         try:
             # Fetch a limited number of distinct company codes
@@ -68,4 +67,7 @@ def IndexPage(request):
 
 def StocksPage(request):
     return render(request, 'companyList.html')
+
+def StockQuery(request):
+    return render(request,'query.html')
 

@@ -6,51 +6,130 @@
     <title>公司股票价格展示</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
             padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
         }
         h1 {
-            color: #133;
+            text-align: center;
+            color: #444;
+            margin: 20px 0;
+            font-size: 2.5em;
+        }
+        .input-group {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .input-group input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .input-group button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
+        .company-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: stretch;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .table-container {
-            margin-top: 20px;
+            flex: 1;
+        }
+        .chart-container {
+            flex: 1;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 12px;
             text-align: left;
         }
         th {
             background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        .loading {
+            text-align: center;
+            font-size: 1.2em;
+            color: #666;
+            margin: 20px 0;
+        }
+        @media (max-width: 768px) {
+            .company-container {
+                flex-direction: column;
+            }
+            h1 {
+                font-size: 2em;
+            }
         }
     </style>
+    <!-- 引入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>公司股票价格</h1>
+    <h1>公司股票价格展示</h1>
     <div class="input-group">
         <label for="companyNum">公司数量:</label>
-        <input type="number" id="companyNum" value="5" min="1">
+        <input type="number" id="companyNum" value="12" min="1">
         
         <label for="stockNum">股票数量:</label>
-        <input type="number" id="stockNum" value="3" min="1">
+        <input type="number" id="stockNum" value="12" min="1">
         
         <button id="fetchButton">获取股票价格</button>
     </div>
 
-    <div id="stock_prices_list" class="table-container"></div>
+    <div id="stock_data_list">
+        <div class="loading">加载中，请稍候...</div>
+    </div>
 
     <script>
+        // 页面加载时自动运行
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchStockData();
+        });
+
+        // 点击按钮时重新获取数据
         document.getElementById('fetchButton').addEventListener('click', function() {
+            fetchStockData();
+        });
+
+        function fetchStockData() {
             const companyNum = document.getElementById('companyNum').value;
             const stockNum = document.getElementById('stockNum').value;
 
-            const url = `http://127.0.0.1:8000/api/get_stocks_all_list/${companyNum}/${stockNum}/`; // 调整URL
+            const url = `http://127.0.0.1:8000/api/get_stocks_all_list/${companyNum}/${stockNum}/`;
+
+            const stockDataDiv = document.getElementById('stock_data_list');
+            stockDataDiv.innerHTML = '<div class="loading">加载中，请稍候...</div>';
 
             fetch(url)
                 .then(response => {
@@ -60,20 +139,24 @@
                     return response.json();
                 })
                 .then(data => {
-                    const stockPricesDiv = document.getElementById('stock_prices_list');
-                    stockPricesDiv.innerHTML = ''; // 清空之前的内容
+                    stockDataDiv.innerHTML = ''; // 清空之前的内容
 
-                    // 确保API返回多个公司的数据
                     if (Object.keys(data).length === 0) {
-                        stockPricesDiv.innerHTML = '没有找到股票数据。';
+                        stockDataDiv.innerHTML = '<div class="loading">没有找到股票数据。</div>';
                         return;
                     }
 
-                    // 为每个公司生成一个表格
+                    // 为每个公司生成表格和图表
                     for (const [code, prices] of Object.entries(data)) {
+                        // 创建公司容器
+                        const companyContainer = document.createElement('div');
+                        companyContainer.className = 'company-container';
+
+                        // 生成表格
+                        const tableContainer = document.createElement('div');
+                        tableContainer.className = 'table-container';
                         let tableHtml = `<h2>${code} 的股票价格</h2>`;
                         tableHtml += '<table><tr><th>日期</th><th>价格</th></tr>';
-                        
                         prices.forEach(stock => {
                             tableHtml += `<tr>
                                 <td>${stock.date}</td>
@@ -81,14 +164,62 @@
                             </tr>`;
                         });
                         tableHtml += '</table>';
-                        stockPricesDiv.innerHTML += tableHtml; // 将表格添加到页面
+                        tableContainer.innerHTML = tableHtml;
+                        companyContainer.appendChild(tableContainer);
+
+                        // 生成图表
+                        const chartContainer = document.createElement('div');
+                        chartContainer.className = 'chart-container';
+                        chartContainer.innerHTML = `<h2>${code} 的股价走向</h2>`;
+                        const canvas = document.createElement('canvas');
+                        chartContainer.appendChild(canvas);
+                        companyContainer.appendChild(chartContainer);
+
+                        // 将公司容器添加到页面
+                        stockDataDiv.appendChild(companyContainer);
+
+                        // 提取日期和价格数据
+                        const labels = prices.map(stock => stock.date);
+                        const dataPoints = prices.map(stock => stock.stock_price);
+
+                        // 使用 Chart.js 绘制折线图
+                        new Chart(canvas, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: '股价',
+                                    data: dataPoints,
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: '日期'
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: '价格'
+                                        }
+                                    }
+                                }
+                            }
+                        });
                     }
                 })
                 .catch(error => {
                     console.error('获取股票价格时出错:', error);
-                    document.getElementById('stock_prices_list').innerHTML = '无法获取股票价格';
+                    stockDataDiv.innerHTML = '<div class="loading">无法获取股票价格。</div>';
                 });
-        });
+        }
     </script>
 </body>
 </html>
