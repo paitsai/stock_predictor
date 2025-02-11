@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司股票价格展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        h1 {
+            color: #133;
+        }
+        .table-container {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>公司股票价格</h1>
+    <div class="input-group">
+        <label for="companyNum">公司数量:</label>
+        <input type="number" id="companyNum" value="5" min="1">
+        
+        <label for="stockNum">股票数量:</label>
+        <input type="number" id="stockNum" value="3" min="1">
+        
+        <button id="fetchButton">获取股票价格</button>
+    </div>
+
+    <div id="stock_prices_list" class="table-container"></div>
+
+    <script>
+        document.getElementById('fetchButton').addEventListener('click', function() {
+            const companyNum = document.getElementById('companyNum').value;
+            const stockNum = document.getElementById('stockNum').value;
+
+            const url = `http://127.0.0.1:8000/api/get_stocks_all_list/${companyNum}/${stockNum}/`; // 调整URL
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误！状态码: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const stockPricesDiv = document.getElementById('stock_prices_list');
+                    stockPricesDiv.innerHTML = ''; // 清空之前的内容
+
+                    // 确保API返回多个公司的数据
+                    if (Object.keys(data).length === 0) {
+                        stockPricesDiv.innerHTML = '没有找到股票数据。';
+                        return;
+                    }
+
+                    // 为每个公司生成一个表格
+                    for (const [code, prices] of Object.entries(data)) {
+                        let tableHtml = `<h2>${code} 的股票价格</h2>`;
+                        tableHtml += '<table><tr><th>日期</th><th>价格</th></tr>';
+                        
+                        prices.forEach(stock => {
+                            tableHtml += `<tr>
+                                <td>${stock.date}</td>
+                                <td>${stock.stock_price}</td>
+                            </tr>`;
+                        });
+                        tableHtml += '</table>';
+                        stockPricesDiv.innerHTML += tableHtml; // 将表格添加到页面
+                    }
+                })
+                .catch(error => {
+                    console.error('获取股票价格时出错:', error);
+                    document.getElementById('stock_prices_list').innerHTML = '无法获取股票价格';
+                });
+        });
+    </script>
+</body>
+</html>

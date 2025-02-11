@@ -23,5 +23,6 @@ from predictor import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("predictor.urls")),
-    path("testpage/", views.IndexPage, name='index'),
+    path("mainpage/", views.IndexPage, name='index'),
+    path('show/',views.StocksPage,name='show')
 ]
