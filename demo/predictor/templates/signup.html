@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - 股票预测系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* 保持原有样式基础上优化 */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .register-box {
+            background: #fff;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 480px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+            outline: none;
+        }
+
+        .error-feedback {
+            color: #e53e3e;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 0.875rem;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn:hover {
+            background-color: #3182ce;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #718096;
+        }
+
+        .login-link a {
+            color: #4299e1;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .alert-success {
+            background-color: #48bb78;
+            color: white;
+        }
+
+        .alert-error {
+            background-color: #f56565;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-box">
+            <h2>创建新账户</h2>
+            
+            <!-- 成功/错误提示 -->
+            <div class="alert" id="messageBox"></div>
+
+            <form id="registerForm">
+                {% csrf_token %}
+                
+                <!-- 用户名 -->
+                <div class="form-group">
+                    <label class="form-label" for="username">用户名</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username"
+                        class="form-control"
+                        placeholder="4-20个字符，支持字母、数字和下划线"
+                        required>
+                    <div class="error-feedback" id="usernameError"></div>
+                </div>
+
+                <!-- 电子邮箱 -->
+                <div class="form-group">
+                    <label class="form-label" for="email">电子邮箱</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email"
+                        class="form-control"
+                        placeholder="example@domain.com"
+                        required>
+                    <div class="error-feedback" id="emailError"></div>
+                </div>
+
+                <!-- 密码 -->
+                <div class="form-group">
+                    <label class="form-label" for="password">密码</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        class="form-control"
+                        placeholder="至少8位，包含字母和数字"
+                        required>
+                    <div class="error-feedback" id="passwordError"></div>
+                </div>
+
+                <!-- 确认密码 -->
+                <div class="form-group">
+                    <label class="form-label" for="password2">确认密码</label>
+                    <input 
+                        type="password" 
+                        id="password2" 
+                        name="password2"
+                        class="form-control"
+                        placeholder="再次输入密码"
+                        required>
+                    <div class="error-feedback" id="password2Error"></div>
+                </div>
+
+                <button type="submit" class="submit-btn">立即注册</button>
+            </form>
+
+            <div class="login-link">
+                已有账号？<a href="http://127.0.0.1:8000/mainpage/">立即登录</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/register/';
+        const form = document.getElementById('registerForm');
+        const messageBox = document.getElementById('messageBox');
+
+        // 处理表单提交
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearErrors();
+
+            const formData = {
+                username: form.username.value.trim(),
+                email: form.email.value.trim(),
+                password: form.password.value,
+                password2: form.password2.value
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('注册成功！正在跳转到登录页面...', 'success');
+                    setTimeout(() => {
+                        window.location.href = "http://127.0.0.1:8000/mainpage/";
+                    }, 2000);
+                } else {
+                    handleErrors(data);
+                }
+            } catch (error) {
+                showMessage('网络错误，请稍后重试', 'error');
+            }
+        });
+
+        // 错误处理
+        function handleErrors(errors) {
+            if (typeof errors === 'object') {
+                Object.keys(errors).forEach(field => {
+                    const errorElement = document.getElementById(`${field}Error`);
+                    if (errorElement) {
+                        errorElement.textContent = errors[field].join(' ');
+                        errorElement.style.display = 'block';
+                    }
+                });
+            } else {
+                showMessage('注册失败，请检查表单', 'error');
+            }
+        }
+
+        // 显示全局消息
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `alert alert-${type}`;
+            messageBox.style.display = 'block';
+        }
+
+        // 清空错误提示
+        function clearErrors() {
+            document.querySelectorAll('.error-feedback').forEach(el => {
+                el.style.display = 'none';
+                el.textContent = '';
+            });
+            messageBox.style.display = 'none';
+        }
+
+        // 获取CSRF Token
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        }
+    </script>
+</body>
+</html>

@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # 'predictor.apps.PredictorConfig', 
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -87,6 +88,31 @@ TEMPLATES = [
 WSGI_APPLICATION = "demo.wsgi.application"
 
 
+# REST_FRAMEWORK = {
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.AllowAny',
+#     ]
+# }
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ]
+}
+
+# 邮箱验证配置示例
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.your-email.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@example.com'
+EMAIL_HOST_PASSWORD = 'your-email-password'
+DEFAULT_FROM_EMAIL = 'noreply@example.com'
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -112,6 +138,7 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -152,5 +179,7 @@ STATIC_ROOT = ''
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = 'predictor.User'
 
 

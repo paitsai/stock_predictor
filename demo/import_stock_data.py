@@ -11,10 +11,14 @@ from predictor.models import StockPrice
 
 
 def import_directory(directory):
+    max_file_num=32
     for filename in os.listdir(directory):
         if filename.lower().endswith(".csv"):
             filepath = os.path.join(directory, filename)
             import_csv(filepath)
+        max_file_num=max_file_num-1
+        if max_file_num<=0:
+            break
 
 
 def import_csv(filepath):

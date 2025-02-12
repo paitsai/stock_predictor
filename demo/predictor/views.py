@@ -3,13 +3,38 @@ from django.http import HttpResponse
 from django.db.models import Count
 # Create your views here.
 
+from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 
+from .serializer import UserRegistrationSerializer
+from django.contrib.auth import get_user_model
+
 from predictor.models import StockPrice
 from predictor.serializer import StockSerializer
+
+
+User = get_user_model()
+
+class RegistrationAPIView(APIView):
+    """用户注册API"""
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        print("已发起注册请求")
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # 这里可以添加发送验证邮件的逻辑
+            return Response({
+                "message": "用户注册成功",
+                "user_id": user.id,
+                "email": user.email
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class StockViewSet(viewsets.ModelViewSet):
@@ -70,4 +95,9 @@ def StocksPage(request):
 
 def StockQuery(request):
     return render(request,'query.html')
+
+
+def SignUp(request):
+    return render(request,'signup.html')
+
 

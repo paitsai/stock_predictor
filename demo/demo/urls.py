@@ -26,4 +26,5 @@ urlpatterns = [
     path("mainpage/", views.IndexPage, name='index'),
     path('show/',views.StocksPage,name='show'),
     path('query/',views.StockQuery,name='query'),
+    path('signup/',views.SignUp,name='signup'),
 ]
